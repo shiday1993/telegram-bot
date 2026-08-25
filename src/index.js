@@ -159,7 +159,28 @@ async function proxyWithFailover(request, env) {
 
     const body = BODYLESS_METHODS.has(request.method.toUpperCase()) ? null : await request.arrayBuffer();
     const errors = [];
+    const BLOCKED_PATHS = [
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+            "/test",
+        ];
 
+    if (BLOCKED_PATHS.some(
+            (path) =>
+            url.pathname === path ||
+            url.pathname.startsWith(`${path}/`)
+        )) {
+        return Response.json({
+                ok: false,
+                message: "Not found",
+            },
+            {
+              status: 404,
+            },
+        );
+    }
+    
     for (const target of targets) {
         try {
             const response = await forwardRequest({
