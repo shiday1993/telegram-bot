@@ -31,8 +31,12 @@ class TelegramCore:
 
     @staticmethod
     def _command(text: str):
-        if text == "/start":
-            return "🟢 Bot aktif."
+        if text.startswith("/start"):
+            parts = text.split(maxsplit=1)
+            param = parts[1] if len(parts) > 1 else None
+            if param == "server1":
+                return "🟢 Kamu masuk dari Server 1"
+            return "🟢 Bot aktif."  
 
         if text == "/status":
             return "🟢 Service berjalan normal."

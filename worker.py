@@ -55,7 +55,7 @@ class Default(WorkerEntrypoint):
         # OPEN BOT
         if request.method == "GET" and path == "/open":
             return Response.redirect(
-                f"https://t.me/{self.env.TELEGRAM_BOT_USERNAME}",
+                f"https://t.me/{self.env.TELEGRAM_BOT_USERNAME}?start=server1",
                 302,
             )
 
