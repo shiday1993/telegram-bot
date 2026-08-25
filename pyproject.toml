@@ -1,10 +1,13 @@
 [project]
-name = "telegram-notifier"
+name = "telegram-bot"
 version = "0.1.0"
 description = "Telegram notification service"
 requires-python = ">=3.13"
 
-dependencies = [
+dependencies = []
+
+[project.optional-dependencies]
+server = [
     "fastapi",
     "httpx",
     "python-dotenv",
