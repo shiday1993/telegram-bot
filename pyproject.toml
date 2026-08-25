@@ -22,3 +22,6 @@ py-modules = [
     "main",
     "worker",
 ]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
