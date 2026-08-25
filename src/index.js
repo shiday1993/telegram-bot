@@ -130,7 +130,7 @@ function validateTelegramWebhook(request, incomingUrl, env) {
         );
     }
 
-    const incomingSecret = request.headers.get("X-Secret-Token");
+    const incomingSecret = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
 
     if (incomingSecret !== env.TELEGRAM_WEBHOOK_SECRET) {
         return jsonResponse(
