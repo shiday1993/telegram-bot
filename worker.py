@@ -17,11 +17,9 @@ def json_response(data, status=200):
 
 
 class Default(WorkerEntrypoint):
-
     async def fetch(self, request):
         url = request.url
         path = "/" + url.split("/", 3)[-1] if url.count("/") >= 3 else "/"
-
         if request.method == "GET" and path == "/":
             return json_response(
                 Res.ok({
@@ -36,55 +34,34 @@ class Default(WorkerEntrypoint):
         if request.method == "POST" and path == "/webhook":
             return await self.webhook(request)
 
-        return json_response(
-            Res.error("Not Found", 404),
-            404,
-        )
+        return json_response(Res.error("Not Found", 404),404,)
 
     async def send(self, request):
         data = await request.json()
-
         chat_id = data.get("chat_id") or self.env.TELEGRAM_CHAT_ID
         message = data.get("message")
-
-        payload = tele_core.message_payload(
-            chat_id=chat_id,
-            text=message,
-        )
-
+        payload = tele_core._payload(chat_id=chat_id,text=message,)
         response = await fetch(
             f"https://api.telegram.org/bot{self.env.TELEGRAM_BOT_TOKEN}/sendMessage",
             method="POST",
-            headers={
-                "content-type": "application/json",
-            },
+            headers={"content-type": "application/json",},
             body=json.dumps(payload),
         )
 
         result = await response.json()
-
-        return json_response(
-            Res.ok(result)
-        )
+        return json_response(Res.ok(result))
 
     async def webhook(self, request):
         update = await request.json()
-
-        data = tele_core.parse_update(update)
-
+        data = tele_core._update(update)
         if not data:
             return json_response(Res.ok())
-
-        reply = tele_core.handle_command(
-            data["text"]
-        )
-
+        reply = tele_core._command(data["text"])
         if reply:
             payload = tele_core.message_payload(
                 chat_id=data["chat_id"],
                 text=reply,
             )
-
             await fetch(
                 f"https://api.telegram.org/bot{self.env.TELEGRAM_BOT_TOKEN}/sendMessage",
                 method="POST",
@@ -93,5 +70,4 @@ class Default(WorkerEntrypoint):
                 },
                 body=json.dumps(payload),
             )
-
         return json_response(Res.ok())
