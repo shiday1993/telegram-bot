@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request, Header, HTTPException
 
 from app.config import config
-from app.telegram import tele
-from app.response import Res
+from app.service.telegram import tele
+from app.core.response import Res
 
 
 app = FastAPI(
@@ -10,13 +10,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
-
 @app.get("/")
-def root():
-    return {
-        "status": "ok",
+async def root():
+    return Res.ok({
         "service": "telegram-bot",
-    }
+        "runtime": "fastapi",
+    })
 
 
 @app.get("/test")
@@ -38,52 +37,24 @@ async def test():
             code=500,
         )
 
-
-@app.get("/updates")
-async def updates():
-    data = await tele.get_updates()
-
-    chats = []
-
-    for update in data.get("result", []):
-        message = update.get("message")
-
-        if not message:
-            continue
-
-        chat = message.get("chat", {})
-        user = message.get("from", {})
-
-        chats.append({
-            "chat_id": chat.get("id"),
-            "type": chat.get("type"),
-            "username": user.get("username"),
-            "first_name": user.get("first_name"),
-            "text": message.get("text"),
-        })
-
-    return chats
+@app.post("/send")
+async def send(request: Request):
+    try:
+        data = await request.json()
+        result = await tele.send(
+            text=data["message"],
+            chat_id=data.get("chat_id"),
+        )
+        return Res.ok(result,"Pesan berhasil dikirim",)
+    except Exception as e:
+        return Res.error(str(e))
 
 
 @app.post("/webhook")
-async def telegram_webhook(
-    request: Request,
-    x_telegram_bot_api_secret_token: str | None = Header(default=None),
-):
-    if (
-        config.TELEGRAM_WEBHOOK_SECRET
-        and x_telegram_bot_api_secret_token
-        != config.TELEGRAM_WEBHOOK_SECRET
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid webhook secret",
-        )
-
-    update = await request.json()
-
-    await tele.handle_update(update)
-
-    return Res.oke({
-        "ok": True,
-    })
+async def webhook(request: Request):
+    try:
+        update = await request.json()
+        await tele.handle_update(update)
+        return Res.ok(message="Update diterima")
+    except Exception as e:
+        return Res.error(str(e))
