@@ -140,125 +140,135 @@ function validateTelegramWebhook(request, incomingUrl, env) {
 
     return null;
 }
+const BLOCKED_PATHS = [
+  "/docs",
+  "/redoc",
+  "/openapi.json",
+  "/test",
+];
+
+function isBlockedPath(pathname) {
+  return BLOCKED_PATHS.some(
+    (path) =>
+      pathname === path ||
+      pathname.startsWith(`${path}/`),
+  );
+}
 
 async function proxyWithFailover(request, env) {
-    const incomingUrl = new URL(request.url);
-    const targets = getBackendTargets(env);
+  const incomingUrl = new URL(request.url);
 
-    if (!targets.length) {
-        console.error("Tidak ada backend URL yang dikonfigurasi");
-
-        return jsonResponse(
-            {
-                ok: false,
-                message: "Backend belum dikonfigurasi",
-            },
-            500,
-        );
-    }
-
-    const body = BODYLESS_METHODS.has(request.method.toUpperCase()) ? null : await request.arrayBuffer();
-    const errors = [];
-    const BLOCKED_PATHS = [
-            "/docs",
-            "/redoc",
-            "/openapi.json",
-            "/test",
-        ];
-
-    if (BLOCKED_PATHS.some(
-            (path) =>
-            url.pathname === path ||
-            url.pathname.startsWith(`${path}/`)
-        )) {
-        return Response.json({
-                ok: false,
-                message: "Not found",
-            },
-            {
-              status: 404,
-            },
-        );
-    }
-    
-    for (const target of targets) {
-        try {
-            const response = await forwardRequest({
-                request,
-                incomingUrl,
-                target,
-                body,
-                env,
-            });
-
-            if (!FAILOVER_STATUS.has(response.status)) {
-                console.log(
-                    JSON.stringify({
-                        event: "proxy_success",
-                        backend: target.name,
-                        method: request.method,
-                        path: incomingUrl.pathname,
-                        status: response.status,
-                    }),
-                );
-
-                return response;
-            }
-
-            errors.push({
-                backend: target.name,
-                status: response.status,
-                reason: "gateway_error",
-            });
-
-            console.warn(
-                JSON.stringify({
-                    event: "proxy_failover",
-                    backend: target.name,
-                    method: request.method,
-                    path: incomingUrl.pathname,
-                    status: response.status,
-                }),
-            );
-        } catch (error) {
-            const reason =
-                error?.name === "AbortError"
-                    ? "timeout"
-                    : error?.message || "network_error";
-
-            errors.push({
-                backend: target.name,
-                reason,
-            });
-
-            console.warn(
-                JSON.stringify({
-                    event: "proxy_failover",
-                    backend: target.name,
-                    method: request.method,
-                    path: incomingUrl.pathname,
-                    reason,
-                }),
-            );
-        }
-    }
-
-    console.error(
-        JSON.stringify({
-            event: "all_backends_failed",
-            method: request.method,
-            path: incomingUrl.pathname,
-            errors,
-        }),
+  // Jangan teruskan endpoint lokal ke backend.
+  if (isBlockedPath(incomingUrl.pathname)) {
+    return jsonResponse(
+      {
+        ok: false,
+        message: "Not found",
+      },
+      404,
     );
+  }
+
+  const targets = getBackendTargets(env);
+
+  if (!targets.length) {
+    console.error("Tidak ada backend URL yang dikonfigurasi");
 
     return jsonResponse(
-        {
-            ok: false,
-            message: "Semua backend tidak dapat diakses",
-        },
-        503,
+      {
+        ok: false,
+        message: "Backend belum dikonfigurasi",
+      },
+      500,
     );
+  }
+
+  const body = BODYLESS_METHODS.has(
+    request.method.toUpperCase(),
+  )
+    ? null
+    : await request.arrayBuffer();
+
+  const errors = [];
+
+  for (const target of targets) {
+    try {
+      const response = await forwardRequest({
+        request,
+        incomingUrl,
+        target,
+        body,
+        env,
+      });
+
+      if (!FAILOVER_STATUS.has(response.status)) {
+        console.log(
+          JSON.stringify({
+            event: "proxy_success",
+            backend: target.name,
+            method: request.method,
+            path: incomingUrl.pathname,
+            status: response.status,
+          }),
+        );
+
+        return response;
+      }
+
+      errors.push({
+        backend: target.name,
+        status: response.status,
+        reason: "gateway_error",
+      });
+
+      console.warn(
+        JSON.stringify({
+          event: "proxy_failover",
+          backend: target.name,
+          method: request.method,
+          path: incomingUrl.pathname,
+          status: response.status,
+        }),
+      );
+    } catch (error) {
+      const reason =
+        error?.name === "AbortError"
+          ? "timeout"
+          : error?.message || "network_error";
+
+      errors.push({
+        backend: target.name,
+        reason,
+      });
+
+      console.warn(
+        JSON.stringify({
+          event: "proxy_failover",
+          backend: target.name,
+          method: request.method,
+          path: incomingUrl.pathname,
+          reason,
+        }),
+      );
+    }
+  }
+
+  console.error(
+    JSON.stringify({
+      event: "all_backends_failed",
+      method: request.method,
+      path: incomingUrl.pathname,
+      errors,
+    }),
+  );
+
+  return jsonResponse(
+    {
+      ok: false,
+      message: "Semua backend tidak dapat diakses",
+    },
+    503,
+  );
 }
 
 export default {
