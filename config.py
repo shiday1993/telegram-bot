@@ -21,6 +21,7 @@ class Settings:
 
     TELEGRAM_BOT_TOKEN = get_str("TELEGRAM_BOT_TOKEN")
     TELEGRAM_CHAT_ID = get_str("TELEGRAM_CHAT_ID")
+    TELEGRAM_WEBHOOK_SECRET = get_str("TELEGRAM_WEBHOOK_SECRET")
 
 
 config = Settings()

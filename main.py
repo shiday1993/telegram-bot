@@ -2,9 +2,14 @@ from fastapi import FastAPI, Request, Header, HTTPException
 
 from config import config
 from telegram import tele
+from response import Res
 
 
-app = FastAPI(title="Telegram Bot", version="1.0.0",)
+app = FastAPI(
+    title="Telegram Bot",
+    version="1.0.0",
+)
+
 
 @app.get("/")
 def root():
@@ -13,28 +18,30 @@ def root():
         "service": "telegram-bot",
     }
 
+
 @app.get("/test")
-def test():
+async def test():
     try:
-        result = tele.send(
+        result = await tele.send(
             "🟢 <b>Telegram Bot</b>\n"
             "Service berhasil terhubung."
         )
 
-        return {
-            "success": True,
-            "telegram": result,
-        }
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e),
+        return Res.ok(
+            data=result,
+            message="Pesan berhasil dikirim",
         )
 
+    except Exception as e:
+        return Res.error(
+            message=str(e),
+            code=500,
+        )
+
+
 @app.get("/updates")
-def updates():
-    data = tele.get_updates()
+async def updates():
+    data = await tele.get_updates()
 
     chats = []
 
@@ -57,6 +64,7 @@ def updates():
 
     return chats
 
+
 @app.post("/webhook")
 async def telegram_webhook(
     request: Request,
@@ -71,6 +79,11 @@ async def telegram_webhook(
             status_code=403,
             detail="Invalid webhook secret",
         )
+
     update = await request.json()
-    tele.handle_update(update)
-    return {"ok": True}
+
+    await tele.handle_update(update)
+
+    return Res.oke({
+        "ok": True,
+    })
