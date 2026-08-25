@@ -3,18 +3,19 @@ import requests
 from config import config
 
 
-BASE_URL = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}"
+class Telegram:
+    def __init__(self):
+        self.token = config.TELEGRAM_BOT_TOKEN
+        self.chat_id = config.TELEGRAM_CHAT_ID
+        self.base_url = f"https://api.telegram.org/bot{self.token}"
 
-
-def send_message(
-    message: str,
-    chat_id: str | None = None,
-):
-    chat_id = chat_id or config.TELEGRAM_CHAT_ID
-
-    try:
+        print("TOKEN:", config.TELEGRAM_BOT_TOKEN[:8] if config.TELEGRAM_BOT_TOKEN else None)
+        print("CHAT_ID:", config.TELEGRAM_CHAT_ID)
+        
+    def send(self, message: str, chat_id: str | None = None):
+        chat_id = chat_id or self.chat_id
         response = requests.post(
-            f"{BASE_URL}/sendMessage",
+            f"{self.base_url}/sendMessage",
             json={
                 "chat_id": chat_id,
                 "text": message,
@@ -22,13 +23,38 @@ def send_message(
             },
             timeout=10,
         )
-
+        print("STATUS:", response.status_code)
+        print("RESPONSE:", response.text)
         response.raise_for_status()
+        return response.json()
 
-        data = response.json()
+    def handle_update(self, update: dict):
+        message = update.get("message")
 
-        return data
+        if not message:
+            return
 
-    except requests.RequestException as e:
-        print(f"Telegram error: {e}")
-        return None
+        text = message.get("text", "")
+        chat_id = message["chat"]["id"]
+
+        if text == "/start":
+            self.send(
+                "Bot aktif 🟢",
+                chat_id=chat_id,
+            )
+
+        elif text == "/status":
+            self.send(
+                "Server aman 🟢",
+                chat_id=chat_id,
+            )
+            
+    def get_updates(self):
+        response = requests.get(
+            f"{self.base_url}/getUpdates",
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+
+tele = Telegram()
