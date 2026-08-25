@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Header, HTTPException
 
 from app.config import config
-from app.service.telegram import tele
+from app.service.telegram import tele_service
 from app.core.response import Res
 
 
@@ -21,7 +21,7 @@ async def root():
 @app.get("/test")
 async def test():
     try:
-        result = await tele.send(
+        result = await tele_service.send(
             "🟢 <b>Telegram Bot</b>\n"
             "Service berhasil terhubung."
         )
@@ -41,7 +41,7 @@ async def test():
 async def send(request: Request):
     try:
         data = await request.json()
-        result = await tele.send(
+        result = await tele_service.send(
             text=data["message"],
             chat_id=data.get("chat_id"),
         )
@@ -54,7 +54,7 @@ async def send(request: Request):
 async def webhook(request: Request):
     try:
         update = await request.json()
-        await tele.handle_update(update)
+        await tele_service.handle_update(update)
         return Res.ok(message="Update diterima")
     except Exception as e:
         return Res.error(str(e))

@@ -54,4 +54,4 @@ class TelegramService:
         return None
 
 
-tele = TelegramService()
+tele_service = TelegramService()
