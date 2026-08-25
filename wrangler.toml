@@ -1,15 +1,10 @@
-name = "telegram-gateway"
 main = "src/index.js"
 compatibility_date = "2026-08-25"
 
-workers_dev = true
-
 [vars]
-PRIMARY_BACKEND_URL = "https://tunnel-utama.example.com"
-SECONDARY_BACKEND_URL = "https://tunnel-cadangan.example.com"
-
+PRIMARY_BACKEND_URL = "https://telegram-api-1.shiday.my.id"
+SECONDARY_BACKEND_URL = "https://telegram-api-2.shiday.my.i"
 TELEGRAM_WEBHOOK_PATH = "/webhook"
-
 REQUEST_TIMEOUT_MS = "7000"
 
 [observability]
