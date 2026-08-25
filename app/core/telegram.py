@@ -30,18 +30,27 @@ class TelegramCore:
         }
 
     @staticmethod
-    def _command(text: str):
+    def _command(text: str, chat_id=None):
         if text.startswith("/start"):
-            parts = text.split(maxsplit=1)
-            param = parts[1] if len(parts) > 1 else None
-            if param == "server1":
-                return "🟢 Kamu masuk dari Server 1"
-            return "🟢 Bot aktif."  
+            return (
+                "🟢 <b>Bot aktif.</b>\n\n"
+                f"🆔 Chat ID: <code>{chat_id}</code>"
+            )
+
+        if text == "/id":
+            return (
+                "🆔 <b>Chat ID</b>\n"
+                f"<code>{chat_id}</code>"
+            )
 
         if text == "/status":
-            return "🟢 Service berjalan normal."
+            return (
+                "🟢 <b>Service berjalan normal.</b>\n\n"
+                f"Chat ID: <code>{chat_id}</code>"
+            )
 
         return None
+
 
 
 tele_core = TelegramCore()

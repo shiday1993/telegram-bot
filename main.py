@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, Header, HTTPException
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 
 from app.config import config
 from app.service.telegram import tele_service
@@ -11,6 +12,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
+class SendRequest(BaseModel):
+    message: str
+    chat_id: str | int | None = None
+    
+    
 @app.get("/")
 async def root():
     return Res.ok({
@@ -39,17 +45,12 @@ async def test():
         )
 
 @app.post("/send")
-async def send(request: Request):
+async def send(data: SendRequest):
     try:
-        data = await request.json()
-        result = await tele_service.send(
-            text=data["message"],
-            chat_id=data.get("chat_id"),
-        )
+        result = await tele_service.send(text=data.message,chat_id=data.chat_id,)
         return Res.ok(result,"Pesan berhasil dikirim",)
     except Exception as e:
         return Res.error(str(e))
-
 
 @app.post("/webhook")
 async def webhook(request: Request):
