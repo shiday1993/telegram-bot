@@ -30,28 +30,29 @@ class TelegramService:
                 json=payload,
                 timeout=10,
             )
-
             response.raise_for_status()
-
             return response.json()
 
     async def handle_update(self, update: dict):
         data = tele._update(update)
-
         if not data:
             return None
-
-        reply = tele._command(
-            data["text"]
-        )
-
+        reply = tele._command(data["text"])
         if reply:
             return await self.send(
                 text=reply,
                 chat_id=data["chat_id"],
             )
-
         return None
+    
+    async def get_updates(self):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}/getUpdates",
+                timeout=10,
+            )
+            response.raise_for_status()
+            return response.json()
 
 
 tele_service = TelegramService()
