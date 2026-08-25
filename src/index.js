@@ -34,6 +34,10 @@ function getBackendTargets(env) {
             name: "secondary",
             url: cleanBaseUrl(env.SECONDARY_BACKEND_URL),
         },
+         {
+            name: "tertiary",
+            url: cleanBaseUrl(env.TERTIARY_BACKEND_URL),
+        },
     ].filter((target) => target.url);
 }
 
