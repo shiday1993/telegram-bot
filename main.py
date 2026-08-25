@@ -24,10 +24,6 @@ class SendRequest(BaseModel):
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     accept_header = request.headers.get("accept", "")
     if exc.status_code == 404:
-        if not is_api_request and "text/html" in accept_header:
-            file_404 = os.path.join(frontend_dist, "404.html")
-            if os.path.exists(file_404):
-                return FileResponse(file_404, status_code=404)
         return Res.not_found(message=exc.detail)
 
     return Res.error(message=exc.detail, code=exc.status_code)
@@ -104,10 +100,7 @@ async def chats():
         )
 
     except Exception as e:
-        return Res.error(
-            message=str(e),
-            code=500,
-        )
+        return Res.error(message=str(e))
         
 @app.get("/start")
 async def start_bot():

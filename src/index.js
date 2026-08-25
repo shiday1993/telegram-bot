@@ -159,6 +159,53 @@ function isBlockedPath(pathname) {
   );
 }
 
+
+async function saveChatToD1(body, env) {
+    if (!env.CHAT_DB || !body) return;
+
+    try {
+        const update = JSON.parse(
+            new TextDecoder().decode(body),
+        );
+
+        const message = update?.message;
+        const chat = message?.chat;
+        const user = message?.from;
+
+        if (!chat?.id) return;
+
+        await env.CHAT_DB.prepare(`
+            INSERT INTO telegram_chats (
+                chat_id,
+                chat_type,
+                username,
+                first_name,
+                last_text,
+                last_message_at
+            )
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+
+            ON CONFLICT(chat_id) DO UPDATE SET
+                chat_type = excluded.chat_type,
+                username = excluded.username,
+                first_name = excluded.first_name,
+                last_text = excluded.last_text,
+                last_message_at = CURRENT_TIMESTAMP
+        `)
+            .bind(
+                String(chat.id),
+                chat.type ?? null,
+                user?.username ?? null,
+                user?.first_name ?? null,
+                message?.text ?? null,
+            )
+            .run();
+
+    } catch (error) {
+        console.warn("Gagal menyimpan chat ke D1:", error);
+    }
+}
+
 async function proxyWithFailover(request, env) {
   const incomingUrl = new URL(request.url);
 
@@ -177,7 +224,6 @@ async function proxyWithFailover(request, env) {
 
   if (!targets.length) {
     console.error("Tidak ada backend URL yang dikonfigurasi");
-
     return jsonResponse(
       {
         ok: false,
@@ -187,12 +233,10 @@ async function proxyWithFailover(request, env) {
     );
   }
 
-  const body = BODYLESS_METHODS.has(
-    request.method.toUpperCase(),
-  )
-    ? null
-    : await request.arrayBuffer();
-
+  const body = BODYLESS_METHODS.has(request.method.toUpperCase(),) ? null : await request.arrayBuffer();
+  if (incomingUrl.pathname === (env.TELEGRAM_WEBHOOK_PATH || "/webhook")) {
+      await saveChatToD1(body, env);
+  }
   const errors = [];
 
   for (const target of targets) {
