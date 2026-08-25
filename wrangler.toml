@@ -1,5 +1,7 @@
 main = "src/index.js"
 compatibility_date = "2026-08-25"
+workers_dev = false
+preview_urls = false
 
 [vars]
 PRIMARY_BACKEND_URL = "https://telegram-api-1.shiday.my.id"
