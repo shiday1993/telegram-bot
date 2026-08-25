@@ -16,7 +16,7 @@ class TelegramCore:
     def _update(update: dict):
         message = update.get("message")
 
-        if not message:
+        if not isinstance(message, dict):
             return None
 
         user = message.get("from", {})

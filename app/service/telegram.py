@@ -35,14 +35,21 @@ class TelegramService:
 
     async def handle_update(self, update: dict):
         data = tele._update(update)
-        if not data:
+
+        if not data or not data["chat_id"] or not data["text"]:
             return None
-        reply = tele._command(data["text"])
+
+        reply = tele._command(
+            text=data["text"],
+            chat_id=data["chat_id"],
+        )
+
         if reply:
             return await self.send(
                 text=reply,
                 chat_id=data["chat_id"],
             )
+
         return None
     
     async def get_updates(self):

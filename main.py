@@ -1,11 +1,15 @@
 from fastapi import FastAPI, Request, Header, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel
 
 from app.config import config
 from app.service.telegram import tele_service
 from app.core.response import Res
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Telegram Bot",
@@ -15,8 +19,19 @@ app = FastAPI(
 class SendRequest(BaseModel):
     message: str
     chat_id: str | int | None = None
-    
-    
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    accept_header = request.headers.get("accept", "")
+    if exc.status_code == 404:
+        if not is_api_request and "text/html" in accept_header:
+            file_404 = os.path.join(frontend_dist, "404.html")
+            if os.path.exists(file_404):
+                return FileResponse(file_404, status_code=404)
+        return Res.not_found(message=exc.detail)
+
+    return Res.error(message=exc.detail, code=exc.status_code)
+
 @app.get("/")
 async def root():
     return Res.ok({

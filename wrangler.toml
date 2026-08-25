@@ -7,7 +7,7 @@ preview_urls = false
 [vars]
 PRIMARY_BACKEND_URL = "https://telegram-api-1.shiday.my.id"
 SECONDARY_BACKEND_URL = "https://telegram-origin-01.shiday.my.id"
-SECONDARY_BACKEND_URL = "https://telegram-api-2.shiday.my.id"
+TERTIARY_BACKEND_URL = "https://telegram-api-2.shiday.my.id"
 TELEGRAM_WEBHOOK_PATH = "/webhook"
 REQUEST_TIMEOUT_MS = "7000"
 
