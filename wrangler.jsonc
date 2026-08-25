@@ -1,5 +1,4 @@
 {
-  "name": "telegram-bot",
   "main": "worker.py",
   "compatibility_date": "2026-08-25",
   "compatibility_flags": [
