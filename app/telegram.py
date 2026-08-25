@@ -1,7 +1,7 @@
 import httpx
 
-from config import config
-from response import Res
+from app.config import config
+from app.response import Res
 
 class Telegram:
     def __init__(self):

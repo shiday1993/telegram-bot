@@ -20,8 +20,5 @@ dev = [
 [tool.setuptools]
 py-modules = [
     "main",
-    "telegram",
     "worker",
-    "config",
-    "response"
 ]

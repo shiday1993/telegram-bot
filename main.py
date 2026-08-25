@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request, Header, HTTPException
 
-from config import config
-from telegram import tele
-from response import Res
+from app.config import config
+from app.telegram import tele
+from app.response import Res
 
 
 app = FastAPI(
